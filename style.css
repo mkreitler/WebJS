@@ -18,16 +18,8 @@ textarea{
   font: .8em "Lucida Sans Unicode", "Lucida Grande", sans-serif;
 }
 
-.input {
-  border: 1px solid #222;
-  background: #dfd;
-}
-
-.button{
-  border: 1px solid #222;
-  background: #ffc;
-  margin: 2px;
-  padding: 2px;
+legend{
+  padding: 5px;
 }
 
 label {
@@ -39,8 +31,32 @@ label {
 
 br { clear: left; }
 
+input.moduleChk {
+    display: inline-block;
+    margin:7px;
+}
+
+input.typeRdo {
+    display: inline-block;
+    margin:7px;
+}
+
+.button{
+  border: 1px solid #222;
+  background: #ffc;
+  margin: 2px;
+  padding: 2px;
+}
+
+.lowButton{
+  border: 1px solid #222;
+  background: #ffc;
+  margin: 20px 2px 2px 2px;
+  padding: 5px;
+}
+
 #wrapper{
-  width:720px;
+  width:800px;
   height:700px;
   margin:40px auto 0;
 }
@@ -61,7 +77,7 @@ br { clear: left; }
 }
 
 #tabContainer {
-  width:700px;
+  width:800px;
   padding:15px;
   background-color:#2e2e2e;
   -moz-border-radius: 4px;

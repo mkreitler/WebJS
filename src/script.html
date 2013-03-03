@@ -1,30 +1,33 @@
-<script src="setup.js"></script?
+        <script src="src/setup.js"></script>
+        <FORM action="http://www.freegamersjournal.com/WebJS/php/runScript.php"
+        method="post" id="formRunCode" target="_blank">
+         <P>
+         <label for="textName">Name: </label>
+         <TEXTAREA class="input" id="textName" name="textName" rows="1" cols="20" value=""></TEXTAREA>
+         </P>
 
-          <FORM action="http://www.freegamersjournal.com/WebJS/php/runScript.php"
-          method="post" id="formRunCode" target="_blank">
-           <P>
-           <label for="textName">Name: </label>
-           <TEXTAREA class="input" id="textName" name="textName" rows="1" cols="20" value=""></TEXTAREA>
-           </P>
+         <P>
+         <label for="textWidth">Width: </label>
+         <TEXTAREA class="input" id="textWidth" name="textWidth" rows="1" cols="10" value="1024"></TEXTAREA>
+         </P>
 
-           <P>
-           <label for="textWidth">Width: </label>
-           <TEXTAREA class="input" id="textWidth" name="textWidth" rows="1" cols="10" value="1024"></TEXTAREA>
-           </P>
+         <P>
+         <label for="textHeight">Height: </label>
+         <TEXTAREA class="input" id="textHeight" name="textHeight" rows="1" cols="10" value="768"></TEXTAREA>
+         </P>
 
-           <P>
-           <label for="textHeight">Height: </label>
-           <TEXTAREA class="input" id="textHeight" name="textHeight" rows="1" cols="10" value="768"></TEXTAREA>
-           </P>
+        <fieldset>
+            <input type="radio" name="programType" id="radioProgram" value="program" checked="checked"/>Program <br />
+            <input type="radio" name="programType" id="radioModule" value="module" />Module<br />
+        </fieldset>
 
-            <label>&nbsp; </label>
-            <input class="button" name="loadProgram" onclick="return loadCode();" type="submit" value="Load Program"></input>
-            <input class="button" name="saveProgram" onclick="return saveCode();" type="submit" value="Save Program"></input>
-            <input class="button" name="runProgram" type="submit" value="Run Program"></input><br><br>
+          <label>&nbsp; </label>
+          <input class="lowButton" name="loadProgram" onclick="return loadCode();" type="submit" value="Load Program"></input>
+          <input class="lowButton" name="saveProgram" onclick="return saveCode();" type="submit" value="Save Program"></input>
+          <input class="lowButton" name="runProgram" type="submit" value="Run Program"></input><br><br>
 
-           <P>
-           Code<br>
-           <TEXTAREA id="textCode" rows="80" cols="135" value="">
-           </TEXTAREA>
-           </P>
+         <P>
+         Code<br>
+         <TEXTAREA id="textCode" rows="80" cols="111" value=""></TEXTAREA>
+         </P>
         </FORM>
