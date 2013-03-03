@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<script language="javascript" type="text/javascript" src="./editarea/edit_area/edit_area_full.js"></script>
+<script language="javascript" type="text/javascript">
+editAreaLoader.init({
+  id : "textCode"   // textarea id
+  ,syntax: "js"      // syntax to be uses for highgliting
+  ,start_highlight: true    // to display with highlight mode on start-up
+});
+</script>
+<head>
+<meta charset="utf-8">
+<title>Pure Javascript, HTML 5 &amp; CSS3 Tabs</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div id="wrapper">
+  <div id="tabContainer">
+    <div class="tabs">
+      <ul>
+        <li id="tabHeader_1">Setup</li>
+        <li id="tabHeader_2">Code</li>
+        <li id="tabHeader_3">Output</li>
+      </ul>
+    </div>
+    <div class="tabscontent">
+      <div class="tabpage" id="tabpage_1">
+        <h2>Setup</h2>
+
+        <!-- ============================================================== -->
+        <script src="src/setup.js"></script>
+        <FORM action="http://www.freegamersjournal.com/WebJS/php/runScript.php"
+        method="post" id="formRunCode" target="_blank">
+         <P>
+         <label for="textName">Name: </label>
+         <TEXTAREA class="input" id="textName" name="textName" rows="1" cols="20" value=""></TEXTAREA>
+         </P>
+
+         <P>
+         <label for="textWidth">Width: </label>
+         <TEXTAREA class="input" id="textWidth" name="textWidth" rows="1" cols="10" value="1024"></TEXTAREA>
+         </P>
+
+         <P>
+         <label for="textHeight">Height: </label>
+         <TEXTAREA class="input" id="textHeight" name="textHeight" rows="1" cols="10" value="768"></TEXTAREA>
+         </P>
+
+          <label>&nbsp; </label>
+          <input class="button" name="loadProgram" onclick="return loadCode();" type="submit" value="Load Program"></input>
+          <input class="button" name="saveProgram" onclick="return saveCode();" type="submit" value="Save Program"></input>
+          <input class="button" name="runProgram" type="submit" value="Run Program"></input><br><br>
+
+         <P>
+         Code<br>
+         <TEXTAREA id="textCode" rows="80" cols="111" value=""></TEXTAREA>
+         </P>
+        </FORM>
+        <!-- ============================================================== -->
+      </div>
+      <div class="tabpage" id="tabpage_2">
+        <h2>Code</h2>
+        <p>Put code editor here</p>
+      </div>
+      <div class="tabpage" id="tabpage_3">
+        <h2>Output</h2>
+        <p>Output window goes here</p>
+      </div>
+    </div>
+  </div>
+<script src="tabs.js"></script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<script>
+var SPACER = "***";
+var AMP_CODE = "^";
+var editString = null;
+
+function getSelection()
+{
+    var e = document.getElementById("textNewsList");
+
+    //Mozilla and DOM 3.0
+    if('selectionStart' in e)
+    {
+        var l = e.selectionEnd - e.selectionStart;
+        return { start: e.selectionStart, end: e.selectionEnd, length: l, text:
+        e.value.substr(e.selectionStart, l) };
+    }
+    //IE
+    else if(document.selection)
+    {
+        e.focus();
+        var r = document.selection.createRange();
+        var tr = e.createTextRange();
+        var tr2 = tr.duplicate();
+        tr2.moveToBookmark(r.getBookmark());
+        tr.setEndPoint('EndToStart',tr2);
+        if (r == null || tr == null) return { start: e.value.length, end: e.value.length,
+                  length: 0, text: '' };
+        var text_part = r.text.replace(/[\r\n]/g,'.'); //for some reason IE doesn't always count the \n and \r in the length
+        var text_whole = e.value.replace(/[\r\n]/g,'.');
+        var the_start = text_whole.indexOf(text_part,tr.text.length);
+        return { start: the_start, end: the_start + text_part.length, length:
+         text_part.length, text: r.text };
+    }
+    //Browser not supported
+    else return { start: e.value.length, end: e.value.length, length: 0, text: '' };
+}
+
+function updateSnippets(snippetText) {
+      var textArea = document.getElementById("textNewsList");
+
+      document.getElementById("dataIn").value = snippetText;
+      
+      while (snippetText.indexOf(AMP_CODE) >= 0) {
+        snippetText = snippetText.replace(AMP_CODE, "&");
+      }
+
+      if (textArea) {
+        var rows = snippetText.split('~');
+        var newValue = "";
+
+       for (var i=0; i<rows.length; ++i) {
+         var atIndex = rows[i].indexOf('@');
+         while (atIndex >= 0) {
+           rows[i] = rows[i].replace('@', '***');
+           atIndex = rows[i].indexOf('@');
+         }
+         newValue = newValue + rows[i] + "\n\n";
+       }
+
+        textArea.value=newValue;
+      }
+      else {
+        alert("Failed to retrieve textArea.");
+      }
+}
+
+function getXmlHttpObject() {
+  var xmlhttp;
+  if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+    xmlhttp=new XMLHttpRequest();
+  }
+  else
+  {// code for IE6, IE5
+    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+
+  return xmlhttp;
+}
+
+function loadSnippets()
+{
+  var xmlhttp = getXmlHttpObject();
+
+  var http = new XMLHttpRequest();
+  var url = "http://goldmoneyapp.com/goldlionspottracker/news/NewsEditorSelector/php/retrieveSnippets.php";
+
+  var params = document.getElementById("passwordField").value;
+
+  http.open("POST", url, true);
+
+  //Send the proper header information along with the request
+  http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+  http.onreadystatechange = function() {//Call a function when the state changes.
+    if (http.readyState == 4 && http.status == 200) {
+      updateSnippets(http.responseText);
+    }
+  }
+
+  http.send("args=" + params);  
+
+  return false;
+}
+</script>
+
+<FORM onSubmit="return loadSnippets()" name="selectionForm" id="formLoadDB">
+   <P>
+   Password<br>
+   <INPUT type="password" size=25 id="passwordField">
+   </INPUT>
+   </P>
+
+    <P>
+    Select a news database to view.<br>
+    <select name="database">
+      <option>Select Database</option>
+      <option>Tracker</option>
+    </select>
+
+    <input name="loadDatabase" type="submit" value="Load Database"></input>
+    </P>
+</FORM>
+
+<FORM onSubmit="return addSnippet()" method="post" id="formAddSnippet">
+   <P>
+   Headline<br>
+   <TEXTAREA id="textAddHeadline" rows="1" cols="80" value="">
+   </TEXTAREA>
+   </P>
+
+   <P>
+   Teaser<br>
+   <TEXTAREA id="textAddTeaser" rows="3" cols="80" value="">
+   </TEXTAREA>
+   </P>
+
+   <P>
+   Link<br>
+   <TEXTAREA id="textAddLink" rows="1" cols="80" value="">
+   </TEXTAREA>
+   </P>
+
+   <P>
+   Priority<br>
+   <TEXTAREA id="textAddPriority" rows="1" cols="80" value="">
+   </TEXTAREA>
+   </P>
+
+    <P>
+    <INPUT type="submit" value="Add"> </INPUT>
+    </P>
+
+</FORM>
+
+<FORM onSubmit="return editSnippet()" method="post" id="formEditSnippets">
+    <INPUT type="submit" value="Edit"> </INPUT>
+    </P>
+
+</FORM>
+
+<script>
+deleteOldSnippet = function() {
+  var bDidDelete = false;
+
+  if (editString) {
+    var http = new XMLHttpRequest();
+    var url = "http://goldmoneyapp.com/goldlionspottracker/news/NewsEditorSelector/php/deleteSnippets.php"
+
+    http.open("POST", url, true);
+
+    //Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+    http.onreadystatechange = function() {//Call a function when the state changes.
+      if (http.readyState == 4 && http.status == 200) {
+        insertSnippet();
+      }
+    }
+
+    http.send("args=" + editString);
+    editString = null;
+    bDidDelete = true;
+  }
+
+  return bDidDelete;
+}
+
+insertSnippet = function() {
+  var selectedSnippets = getSelection().text;
+
+  var http = new XMLHttpRequest();
+  var url = "http://goldmoneyapp.com/goldlionspottracker/news/NewsEditorSelector/php/addSnippet.php"
+
+  var params = document.getElementById("textAddHeadline").value + "@" +
+                       document.getElementById("textAddTeaser").value + "@" +
+                       document.getElementById("textAddLink").value + "@" +
+                       document.getElementById("textAddPriority").value;
+
+  params = document.getElementById("passwordField").value + ";" + params;
+
+  while (params.indexOf("&") >= 0) {
+    params = params.replace("&", AMP_CODE);
+  }
+
+  http.open("POST", url, true);
+
+  //Send the proper header information along with the request
+  http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+  http.onreadystatechange = function() {//Call a function when the state changes.
+    if (http.readyState == 4 && http.status == 200) {
+      updateSnippets(http.responseText);
+    }
+  }
+
+  http.send("args=" + params);
+
+  document.getElementById("dataOut").value = params;
+  document.getElementById("textAddHeadline").value = "";
+  document.getElementById("textAddTeaser").value = "";
+  document.getElementById("textAddLink").value = "";
+  document.getElementById("textAddPriority").value = "";
+}
+
+addSnippet = function() {
+  // Delete the old entry, if any.
+  if (!deleteOldSnippet()) {
+    insertSnippet();
+  }
+
+  return false;
+}
+</script>
+
+<script>
+editSnippet = function() {
+  var selectedSnippets = getSelection().text;
+
+  var params = "";
+  var snippetRows = selectedSnippets.split('\n');
+  var snippet = snippetRows[0];
+  var fields = snippet.split(SPACER);
+
+  // Place the selected snippet into the "Add" interface.
+  document.getElementById("textAddHeadline").value = fields[0];
+  document.getElementById("textAddTeaser").value = fields[1];
+  document.getElementById("textAddLink").value = fields[2];
+  document.getElementById("textAddPriority").value = fields[3];
+
+  // Delete the snippet we're about to edit.
+  while (snippet.indexOf("&") >= 0) {
+    snippet = snippet.replace("&", AMP_CODE);
+  }
+
+  while (snippet && snippet.indexOf(SPACER) >= 0) {
+      snippet = snippet.replace(SPACER, "@");
+  }
+
+  params = params + snippet + "~";
+
+  params = document.getElementById("passwordField").value + ";" + params;
+  editString = params;
+
+  return false;
+}
+</script>
+
+<script>
+deleteSnippets = function() {
+  var selectedSnippets = getSelection().text;
+
+  var http = new XMLHttpRequest();
+  var url = "http://goldmoneyapp.com/goldlionspottracker/news/NewsEditorSelector/php/deleteSnippets.php"
+
+  var params = "";
+  var snippetRows = selectedSnippets.split('\n');
+  for (var i=0; i<snippetRows.length; ++i) {
+    var snippet = snippetRows[i];
+
+    while (snippet && snippet.indexOf(SPACER) >= 0) {
+        snippet = snippet.replace(SPACER, "@");
+    }
+
+    while (snippet && snippet.indexOf(SPACER) >= 0) {
+        snippet = snippet.replace(SPACER, "@");
+    }
+
+    params = params + snippet + "~";
+  }
+
+  params = document.getElementById("passwordField").value + ";" + params;
+
+  http.open("POST", url, true);
+
+  //Send the proper header information along with the request
+  http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+  http.onreadystatechange = function() {//Call a function when the state changes.
+    if (http.readyState == 4 && http.status == 200) {
+      updateSnippets(http.responseText);
+    }
+  }
+
+  http.send("args=" + params);
+
+  return false;
+}
+</script>
+
+<FORM onSubmit="return deleteSnippets()" method="post" id="formDeleteSnippets">
+   <P>
+   Current News Entries:<br>
+   <TEXTAREA id="textNewsList" rows="30" cols="80">
+   </TEXTAREA>
+   </P>
+
+    <P>
+    <INPUT type="submit" value="Delete"> </INPUT>
+    </P>
+
+</FORM>
+
+ <P>
+ Data Out:<br>
+ <TEXTAREA id="dataOut" rows="4" cols="80">
+ </TEXTAREA>
+ </P>
+
+ <P>
+ Data In:<br>
+ <TEXTAREA id="dataIn" rows="10" cols="80">
+ </TEXTAREA>
+ </P>
+
