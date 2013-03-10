@@ -10,10 +10,15 @@ editAreaLoader.init({
 </script>
 <head>
 <meta charset="utf-8">
-<title>Pure Javascript, HTML 5 &amp; CSS3 Tabs</title>
+<title>WebJS</title>
 <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
+
+<script src="src/setup.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", loadModules);
+</script>
 
 <div id="wrapper">
   <div id="tabContainer">
@@ -29,7 +34,6 @@ editAreaLoader.init({
         <h2>Code</h2>
 
         <!-- ============================================================== -->
-        <script src="src/setup.js"></script>
         <FORM action="http://www.freegamersjournal.com/WebJS/php/runScript.php"
         method="post" id="formRunCode" target="_blank">
          <P>
@@ -71,11 +75,8 @@ editAreaLoader.init({
         <!-- ============================================================== -->
         <p>Select and Order Modules</p>
 
-        <fieldset>
-          <legend>Include Modules</legend>
-            <input type="checkbox" class="moduleChk" id="checkGraphics" value="classStructure" checked="checked" />classStructure<br />
-            <input type="checkbox" class="moduleChk" id="checkClasses" value="canvasGraphics" checked="checked" />canvasGraphics<br />
-        </fieldset>
+        <fieldset name="fieldsetModules">
+          <legend>Include Modules</legend></legend>
         <!-- ============================================================== -->
       </div>
       <div class="tabpage" id="tabpage_3">

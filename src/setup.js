@@ -11,12 +11,74 @@ function getXmlHttpObject() {
   }
 
   return xmlhttp;
-}
+};
 
 // POST syntax
 // xmlhttp.open("POST","ajax_test.asp",true);
 // xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 // xmlhttp.send("fname=Henry&lname=Ford");
+var modules = [];
+function loadModules() {
+  var xmlhttp = getXmlHttpObject();
+
+  var http = new XMLHttpRequest();
+  var url = "http://www.freegamersjournal.com/WebJS/php/loadModules.php";
+  var moduleList = document.getElementsByName("fieldsetModules")[0];
+  var i;
+
+  http.open("POST", url, true);
+
+  //Send the proper header information along with the request
+  http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+  http.onreadystatechange = function() {
+    if (moduleList && http.readyState === 4 && http.status == 200) {
+      var results = http.responseText.split("~");
+      var opt;
+      var label;
+      var br;
+
+      // <input type="checkbox" class="moduleChk" id="checkGraphics" value="classStructure" checked="checked" />classStructure<br />
+      // <input type="checkbox" class="moduleChk" id="checkClasses" value="canvasGraphics" checked="checked" />canvasGraphics<br />
+
+      for (i=0; i<results.length; ++i) {
+        results[i] = results[i].replace("\n", "");
+        results[i] = results[i].replace(" ", "");
+
+        br = document.createElement("br");
+
+        label = document.createElement("label");
+
+        opt = document.createElement("input");
+        opt.type = "checkbox";
+        opt.class = "moduleChk";
+        opt.name = results[i];
+        opt.id = results[i];
+        opt.value = results[i];
+
+        label.appendChild(document.createTextNode(results[i]));
+        label.appendChild(opt);
+
+        moduleList.appendChild(label);
+        moduleList.appendChild(br);
+
+        modules.push(opt);
+      }
+    }
+  }
+
+  http.send("");  
+
+  return false;
+};
+
+function addModule() {
+  alert("Add Module");
+};
+
+function removeModule() {
+  alert("Remove Module");
+};
 
 function loadCode()
 {
@@ -38,7 +100,7 @@ function loadCode()
   http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
   http.onreadystatechange = function() {//Call a function when the state changes.
-    if (http.readyState === 4 && http.status == 200) {
+    if (http.readyState === 4 && http.status == 200 && http.responseText) {
       var results = http.responseText.split("~");
       var isModule = parseInt(results[0]);
 
@@ -56,10 +118,9 @@ function loadCode()
 
       // Update the "modules" checkboxes.
       requiredModules = results[3].split(",");
-      allModules = document.getElementsByClassName("moduleChk");
 
-      for (iMod=0; iMod<allModules.length; ++iMod) {
-        checkBox = allModules[iMod];
+      for (iMod=0; iMod<modules.length; ++iMod) {
+        checkBox = modules[iMod];
         checkBox.checked = false;
 
         for (jMod=0; jMod<requiredModules.length; ++jMod) {
@@ -122,26 +183,20 @@ function postToUrl(path, params, method) {
 function saveCode() {
   var path = "http://www.freegamersjournal.com/WebJS/php/saveScript.php";
 
-  var moduleList = document.getElementsByClassName("moduleChk");
-  var modules = "";
+  var moduleStr = "";
   var iMod;
   var moduleCount = 0;
   var isModule = document.getElementById("radioModule").checked;
   var width = isModule ? "0" : document.getElementById("textWidth").value;
   var height = isModule ? "0" : document.getElementById("textHeight").value;
 
-  for (iMod=0; iMod<moduleList.length; ++iMod) {
-    // Modules can't include other modules.
-    if (isModule) {
-      moduleList[iMod].checked = false;
-    }
-
-    if (moduleList[iMod].checked) {
+  for (iMod=0; iMod<modules.length; ++iMod) {
+    if (modules[iMod].checked) {
       if (moduleCount > 0) {
-          modules = modules + ",";
+          moduleStr = moduleStr + ",";
       }
 
-      modules = modules + moduleList[iMod].value;
+      moduleStr = moduleStr + modules[iMod].value;
       moduleCount += 1;
     }
   }
@@ -152,7 +207,7 @@ function saveCode() {
     name:document.getElementById("textName").value,
     type:isModule ? "0" : "1",
     code:editAreaLoader.getValue("textCode"),
-    modules:modules
+    modules:moduleStr
   };
   postToUrl(path, params, "post");
 

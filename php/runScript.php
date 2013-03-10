@@ -26,7 +26,7 @@ function includeModules() {
 ?>
 
 <?php
-  function writePage($width, $height, $wantsCanvas, $script) {
+  function writePage($width, $height, $script) {
     global $moduleList;
 
     $module = strtok($modules, ",");
@@ -35,17 +35,12 @@ function includeModules() {
     echo("<html>\n");
     echo("  <body>\n");
 
-    if ($wantsCanvas) {
-      echo("    <canvas id=theCanvas width=" . $width . " height=" . $height . "></canvas>\n");
-    }
-
     echo("    <pre>\n");
     echo("      <script type=\"text/javascript\">\n");
     echo("  <!-- Script Start ----------------------------------->\n");
 
-    if ($wantsCanvas) {
-      echo("      var graphics=document.getElementById('theCanvas').getContext('2d');\n");
-    }
+    echo("var _gameWidth = " . $width . ";\n");
+    echo("var _gameHeight = " . $height . ";\n");
 
     includeModules();
 
@@ -63,25 +58,68 @@ function includeModules() {
 ?>
 
 <?php
-function buildModuleList($modules) {
+function buildModuleList($modules, $curModule) {
   global $moduleList;
 
-  $wantsCanvas = false;
+  $localModuleList = array();
 
   $module = strtok($modules, ",");
   while ($module) {
-    if (strcmp($module, "canvasGraphics") == 0) {
-      $wantsCanvas = true;
-    }
-    else {
-      // echo("MODULE: " . $module . "\n");
-      $moduleList[count($moduleList)] = $module;
-    }
+    $module = str_replace(" ", "", $module);
+    $module = str_replace("\n", "", $module);
+    $module = str_replace("\t", "", $module);
+    $localModuleList[count($localModuleList)] = $module;
 
     $module = strtok(",");
   }
 
-  return $wantsCanvas;
+  $nLocalModules = count($localModuleList);
+//  echo("Num modules: " . $nLocalModules . "<br>");
+  for ($j=0; $j<$nLocalModules; ++$j) {
+    $module = $localModuleList[$j];
+
+    $moduleIncluded = false;
+    $addToList = true;
+
+    $nModules = count($moduleList);
+    for ($i=0; $i<$nModules; ++$i) {
+      if (strcmp($moduleList[$i], $module) == 0) {
+//        echo("Found " . $module . "<br>");
+        $moduleIncluded = true;
+        $addToList = false;
+        break;
+      }
+    }
+
+//    echo("Current module: " . $module . "   moduleIncluded: " . ($moduleIncluded ? 1 : 0) . "<br>");
+
+    if (!$moduleIncluded && strcmp($module, $curModule)) {
+      $qScript = "SELECT * FROM `ProgramData` WHERE `Name` = '" . $module . "' AND `ProgramType` = 0 LIMIT 1";
+//      echo($qScript . "<br>");
+
+      $result = mysql_query($qScript);
+      if ($result) {
+        $row = mysql_fetch_row($result);
+        if ($row) {
+           $submodules = $row[7];
+
+          if (strlen($submodules)) {
+//            echo("SUBMODULES: " . $submodules . "<br>");
+            buildModuleList($submodules, $module);
+          }
+        }
+      }
+    }
+    else {
+//      echo("Module included: " . $moduleIncluded . "   Modules equal: " . (strcmp($module, $curModule) == 0  ? 1 : 0) . "<br>");
+    }
+
+    if ($addToList) {
+//      echo("Adding module: " . $module . "<br>");
+      $moduleList[count($moduleList)] = $module;
+//      echo($moduleList[count($moduleList)]);
+    }
+  }
 }
 ?>
 
@@ -109,7 +147,7 @@ function buildModuleList($modules) {
           $script = $row[6];
           $modules = $row[7];
 
-          $wantsCanvas = buildModuleList($modules);
+          buildModuleList($modules, $name);
 
           // print_r($row);
           // echo("<br>");
@@ -119,8 +157,8 @@ function buildModuleList($modules) {
           // print_r($moduleList);
           // echo("\n");
 
-          if ($width && $height && $moduleList && $script) {
-            writePage($width, $height, $wantsCanvas, $script);
+          if ($width && $height && $script) {
+            writePage($width, $height, $script);
           }
           else {
             echo("Failed to retrieve " . $name . ".<br>");
