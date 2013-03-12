@@ -2,7 +2,7 @@
 
   $con = mysql_connect("localhost","freegan6_WebJS","X+cIVCcTL9J!");
   if ($con) {
-    echo("<br><br><br>");
+//    echo("<br><br><br>");
 
     mysql_select_db("freegan6_WebJS", $con);
 
@@ -16,26 +16,26 @@
     // Out with the old.
     $qDelete = "DELETE FROM `ProgramData` WHERE `Name` = '$name'";
     $result = mysql_query($qDelete);
-    if ($result) {
-      echo("Deleted old code entry.<br>");
-    }
+//    if ($result) {
+//      echo("Deleted old code entry.<br>");
+//    }
 
-    echo("Width: " . $width . "<br>");
-    echo("Height: " . $height . "<br>");
-    echo("Name: " . $name . "<br>");
-    echo("Type: " . $type . "<br>");
-    echo("Modules: " . $modules . "<br>");
-    echo("Code: " . $code . "<br>");
+//    echo("Width: " . $width . "<br>");
+//    echo("Height: " . $height . "<br>");
+//    echo("Name: " . $name . "<br>");
+//    echo("Type: " . $type . "<br>");
+//    echo("Modules: " . $modules . "<br>");
+//    echo("Code: " . $code . "<br>");
 
     $qInsert = "INSERT INTO `ProgramData` (`Width`, `Height`, `Name`, `ProgramType`, `Code`, `Modules`) VALUES ('$width', '$height', '$name', '$type', '$code', '$modules');";
-    echo($qInsert . "<br>");
+//    echo($qInsert . "<br>");
 
     $result = mysql_query($qInsert);
     if ($result) {
       echo("Code saved.<br>");
     }
     else {
-      echo("Save failed.<br>");
+      echo("ERROR: Save failed.<br>");
     }
   }
 ?>

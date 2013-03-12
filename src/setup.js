@@ -1,3 +1,157 @@
+// Helper Functions ///////////////////////////////////////////////////////////
+// getElementById
+function $id(id) {
+  return document.getElementById(id);
+}
+//
+// output information
+function Output(msg) {
+  var m = $id("messages");
+  m.innerHTML = m.innerHTML + msg;
+}
+
+// file drag hover
+function FileDragHover(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  e.target.className = (e.type == "dragover" ? "hover" : "");
+}
+
+// file selection
+function FileSelectHandler(e) {
+  // cancel event and hover styling
+  FileDragHover(e);
+  // fetch FileList object
+  var files = e.target.files || e.dataTransfer.files;
+  // process all File objects
+  for (var i = 0, f; f = files[i]; i++) {
+    ParseFile(f);
+    UploadFile(f);
+  }
+}
+
+function UploadFile(file) {
+// upload image files
+  var xhr = new XMLHttpRequest();
+  var bIsImage = file.type === "image/jpeg" || file.type === "image/png";
+  var bIsAudio = file.type === "audio/mp3" || file.type === "audio/ogg";
+  var bIsText = file.type.indexOf("text") >= 0;
+
+  if (xhr.upload && (bIsImage || bIsAudio || bIsText) && file.size <= $id("MAX_FILE_SIZE").value) {
+    // create progress bar
+    var o = $id("progress");
+    var progress = o.appendChild(document.createElement("p"));
+    progress.appendChild(document.createTextNode("upload " + file.name));
+
+    // progress bar
+    xhr.upload.addEventListener("progress", function(e) {
+      var pc = parseInt(100 - (e.loaded / e.total * 100));
+      progress.style.backgroundPosition = pc + "% 0";
+    }, false);
+
+    // file received/failed
+    xhr.onreadystatechange = function(e) {
+      if (xhr.readyState == 4) {
+        progress.className = (xhr.status == 200 ? "success" : "failure");
+      }
+    };    
+
+    // start upload
+    if (bIsImage) {
+      xhr.open("POST", "php/uploadImage.php", true);
+    }
+    else if (bIsAudio) {
+      xhr.open("POST", "php/uploadAudio.php", true);
+    }
+    else {
+      // Must be text.
+      xhr.open("POST", "php/uploadText.php", true);
+    }
+
+    xhr.setRequestHeader("X_FILENAME", file.name);
+    xhr.send(file);
+  }
+}
+
+function ParseFile(file) {
+  Output(
+    "<p>File information: <strong>" + file.name +
+    "</strong> type: <strong>" + file.type +
+    "</strong> size: <strong>" + file.size +
+    "</strong> bytes</p>"
+  );
+
+  // display text
+  if (file.type.indexOf("text") == 0) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      Output(
+        "<p><strong>" + file.name + ":</strong></p><pre>" +
+        e.target.result.replace(/</g, "&lt;").replace(/>/g, "&gt;") +
+        "</pre>"
+      );
+    }
+//    reader.readAsText(file);
+  }
+
+  // display an image
+  if (file.type.indexOf("image") == 0) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      Output(
+        "<p><strong>" + file.name + ":</strong><br />" +
+        '<img src="' + e.target.result + '" /></p>'
+      );
+    }
+//    reader.readAsDataURL(file);
+  }  
+
+  if (file.type.indexOf("audio") == 0) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      Output(
+        "<p><strong>" + file.name + ":</strong><br />" +
+        '<img src="' + e.target.result + '" /></p>'
+      );
+    }
+//    reader.readAsDataURL(file);
+  }  
+}
+
+//
+// initialize
+function Init() {
+  var fileselect = $id("fileselect"),
+    submitbutton = $id("submitbutton"),
+    filedrag = $id("filedrag");
+
+  if (window.File && window.FileList && window.FileReader) {
+    if (!filedrag || typeof(filedrag) === 'undefined') {
+      setTimeout(Init, 100);
+    }
+    else {
+      submitbutton = $id("submitbutton");
+
+      // file select
+      fileselect.addEventListener("change", FileSelectHandler, false);
+
+      // is XHR2 available?
+      var xhr = new XMLHttpRequest();
+      if (xhr.upload) {
+        // file drop
+        filedrag.addEventListener("dragover", FileDragHover, false);
+        filedrag.addEventListener("dragleave", FileDragHover, false);
+        filedrag.addEventListener("drop", FileSelectHandler, false);
+        filedrag.style.display = "block";
+        // remove submit button
+        submitbutton.style.display = "none";
+      }
+
+      loadModules();
+    }
+  }
+}
+
 // XMLHttp ////////////////////////////////////////////////////////////////////
 function getXmlHttpObject() {
   var xmlhttp;
@@ -159,12 +313,12 @@ function postToUrl(path, params, method) {
     for(var key in params) {
         if(params.hasOwnProperty(key)) {
 
-//      var arg = params[key];
-//           if (arg.indexOf("\"") >= 0) {
-//    var splitList = arg.split("\"");
-//    arg = splitList.join("\\\"");
-//    params[key] = arg;
-//            }
+//    var arg = params[key];
+//    if (arg.indexOf("\"") >= 0) {
+//      var splitList = arg.split("\"");
+//      arg = splitList.join("\\\"");
+//      params[key] = arg;
+//    }
 
             var hiddenField = document.createElement("input");
             hiddenField.setAttribute("type", "hidden");
@@ -178,7 +332,6 @@ function postToUrl(path, params, method) {
     document.body.appendChild(form);
     form.submit();
 }
-
 
 function saveCode() {
   var path = "http://www.freegamersjournal.com/WebJS/php/saveScript.php";
