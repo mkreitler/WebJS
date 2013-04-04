@@ -15,6 +15,7 @@ h2{
 textarea{
   outline: none;
   resize: none;
+  padding: 2px;
   font: .8em "Lucida Sans Unicode", "Lucida Grande", sans-serif;
 }
 
@@ -24,7 +25,7 @@ legend{
 
 label {
     display: inline-block;
-    width: 40px;
+    width: 50px;
     margin: 2px 4px 6px 4px;
     text-align: right;
 }

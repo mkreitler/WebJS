@@ -1,8 +1,15 @@
+// Namespace object ///////////////////////////////////////////////////////////
+EditorInfo = {
+  bAskBeforeSaving: false,
+  MIN_SAVE_LENGTH:  10,
+}
+
 // Helper Functions ///////////////////////////////////////////////////////////
 // getElementById
 function $id(id) {
   return document.getElementById(id);
 }
+
 //
 // output information
 function Output(msg) {
@@ -72,6 +79,10 @@ function UploadFile(file) {
     xhr.send(file);
   }
 }
+
+function activateSafeSave() {
+  EditorInfo.bAskBeforeSaving = true;
+};
 
 function ParseFile(file) {
   Output(
@@ -167,15 +178,84 @@ function getXmlHttpObject() {
   return xmlhttp;
 };
 
+var conHistory = {cmdIndex: -1, cmdList:[]};
+function parseCommand(index) {
+  var ret = true;
+  var textArea = null;
+  var xmlObj = null;
+
+  // Check for enter key.
+  if (window.event.keyCode === 13) {
+    // Process command and clear console line.
+    textArea = document.getElementsByName("textConsole" + index)[0];
+    if (textArea) {
+      // Update command history.
+      conHistory.cmdList.push(textArea.value);
+      conHistory.cmdIndex = conHistory.cmdList.length;
+
+      // Send command.      
+      xmlObj = getXmlHttpObject();
+      if (xmlObj) {
+        var http = getXmlHttpObject();
+        var url = "http://www.freegamersjournal.com/WebJS/php/runConsoleCommand.php";
+        var i;
+
+        http.open("POST", url, true);
+
+        //Send the proper header information along with the request
+        http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+        http.onreadystatechange = function() {
+          if (http.readyState === 4 && http.status == 200) {
+            if (http.status == 200) {
+              alert(http.responseText);
+            }
+            else {
+              alert("Command failed.");
+            }
+          }
+        }
+      }
+
+      http.send("command=" + textArea.value);  
+
+      // Clear command.
+      textArea.value = "";
+    }
+
+    ret = false;
+  }
+  else if (window.event.keyCode === 38) {
+    // Up arrow.
+    textArea = document.getElementsByName("textConsole" + index)[0];
+    if (textArea) {
+      conHistory.cmdIndex = Math.max(0, conHistory.cmdIndex - 1);
+      textArea.value = conHistory.cmdList[conHistory.cmdIndex];
+    }
+
+    ret = false;
+  }
+  else if (window.event.keyCode === 40) {
+    // Down arrow.
+    textArea = document.getElementsByName("textConsole" + index)[0];
+    if (textArea) {
+      conHistory.cmdIndex = Math.min(conHistory.cmdIndex + 1, conHistory.cmdList.length - 1);
+      textArea.value = conHistory.cmdList[conHistory.cmdIndex];
+    }
+
+    ret = false;
+  }
+
+  return ret;
+};
+
 // POST syntax
 // xmlhttp.open("POST","ajax_test.asp",true);
 // xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 // xmlhttp.send("fname=Henry&lname=Ford");
 var modules = [];
 function loadModules() {
-  var xmlhttp = getXmlHttpObject();
-
-  var http = new XMLHttpRequest();
+  var http = getXmlHttpObject();
   var url = "http://www.freegamersjournal.com/WebJS/php/loadModules.php";
   var moduleList = document.getElementsByName("fieldsetModules")[0];
   var i;
@@ -236,9 +316,7 @@ function removeModule() {
 
 function loadCode()
 {
-  var xmlhttp = getXmlHttpObject();
-
-  var http = new XMLHttpRequest();
+  var http = getXmlHttpObject();
   var url = "http://www.freegamersjournal.com/WebJS/php/loadScript.php";
   var progName = document.getElementById("textName").value;
   var progType = document.getElementById("radioModule").checked === "checked" ? "module" : "program";
@@ -256,39 +334,53 @@ function loadCode()
   http.onreadystatechange = function() {//Call a function when the state changes.
     if (http.readyState === 4 && http.status == 200 && http.responseText) {
       var results = http.responseText.split("~");
-      var isModule = parseInt(results[0]);
+      var bLoadError = false;
 
-      if (isModule) {
-        document.getElementById("radioModule").checked = false;
-        document.getElementById("radioProgram").checked = true;
+      if (typeof(results) === 'undefined') {
+        bLoadError = true;
       }
-      else {
-        document.getElementById("radioModule").checked = true;
-        document.getElementById("radioProgram").checked = false;
-      }
+      else if (results.length >= 4) {
+        var isModule = parseInt(results[0]);
 
-      document.getElementById("textWidth").value = "" + parseInt(results[1]);
-      document.getElementById("textHeight").value = "" + parseInt(results[2]);
+        if (isModule) {
+          document.getElementById("radioModule").checked = false;
+          document.getElementById("radioProgram").checked = true;
+        }
+        else {
+          document.getElementById("radioModule").checked = true;
+          document.getElementById("radioProgram").checked = false;
+        }
 
-      // Update the "modules" checkboxes.
-      requiredModules = results[3].split(",");
+        document.getElementById("textWidth").value = "" + parseInt(results[1]);
+        document.getElementById("textHeight").value = "" + parseInt(results[2]);
 
-      for (iMod=0; iMod<modules.length; ++iMod) {
-        checkBox = modules[iMod];
-        checkBox.checked = false;
+        // Update the "modules" checkboxes.
+        requiredModules = results[3].split(",");
 
-        for (jMod=0; jMod<requiredModules.length; ++jMod) {
-          if (checkBox.value === requiredModules[jMod]) {
-            checkBox.checked = true;
-            break;
+        for (iMod=0; iMod<modules.length; ++iMod) {
+          checkBox = modules[iMod];
+          checkBox.checked = false;
+
+          for (jMod=0; jMod<requiredModules.length; ++jMod) {
+            if (checkBox.value === requiredModules[jMod]) {
+              checkBox.checked = true;
+              break;
+            }
           }
         }
+
+        // Add the code to the editor.
+        // TODO: force editArea to update the client area
+        // of the "Code" text box following a load().
+        editAreaLoader.setValue("textCode", results[4]);
+      }
+      else {
+        bLoadError = true;
       }
 
-      // Add the code to the editor.
-      // TODO: force editArea to update the client area
-      // of the "Code" text box following a load().
-      editAreaLoader.setValue("textCode", results[4]);
+      if (bLoadError) {
+        alert("Failure during load.");
+      }
     }
   }
 
@@ -334,35 +426,45 @@ function postToUrl(path, params, method) {
 }
 
 function saveCode() {
-  var path = "http://www.freegamersjournal.com/WebJS/php/saveScript.php";
+  var code = editAreaLoader.getValue("textCode");
+  var bAllowSave = true;
 
-  var moduleStr = "";
-  var iMod;
-  var moduleCount = 0;
-  var isModule = document.getElementById("radioModule").checked;
-  var width = isModule ? "0" : document.getElementById("textWidth").value;
-  var height = isModule ? "0" : document.getElementById("textHeight").value;
-
-  for (iMod=0; iMod<modules.length; ++iMod) {
-    if (modules[iMod].checked) {
-      if (moduleCount > 0) {
-          moduleStr = moduleStr + ",";
-      }
-
-      moduleStr = moduleStr + modules[iMod].value;
-      moduleCount += 1;
-    }
+  if (EditorInfo.bAskBeforeSaving || code.length < EditorInfo.MIN_SAVE_LENGTH) {
+      bAllowSave = confirm('Are you sure you want to save?');
   }
 
-  var params = {
-    width:width,
-    height:height,
-    name:document.getElementById("textName").value,
-    type:isModule ? "0" : "1",
-    code:editAreaLoader.getValue("textCode"),
-    modules:moduleStr
-  };
-  postToUrl(path, params, "post");
+  if (bAllowSave) {
+    EditorInfo.bAskBeforeSaving = false;
+
+    var path = "http://www.freegamersjournal.com/WebJS/php/saveScript.php";
+    var moduleStr = "";
+    var iMod;
+    var moduleCount = 0;
+    var isModule = document.getElementById("radioModule").checked;
+    var width = isModule ? "0" : document.getElementById("textWidth").value;
+    var height = isModule ? "0" : document.getElementById("textHeight").value;
+
+    for (iMod=0; iMod<modules.length; ++iMod) {
+      if (modules[iMod].checked) {
+        if (moduleCount > 0) {
+            moduleStr = moduleStr + ",";
+        }
+
+        moduleStr = moduleStr + modules[iMod].value;
+        moduleCount += 1;
+      }
+    }
+
+    var params = {
+      width:width,
+      height:height,
+      name:document.getElementById("textName").value,
+      type:isModule ? "0" : "1",
+      code:code,
+      modules:moduleStr
+    };
+    postToUrl(path, params, "post");
+  }
 
   return false;
 }

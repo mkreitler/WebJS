@@ -35,11 +35,15 @@ document.addEventListener("DOMContentLoaded", Init);
         <h2>Code</h2>
 
         <!-- ============================================================== -->
+        <legend>Console</legend>
+        <TEXTAREA class="input" onkeydown="return parseCommand(1);" id="textConsole1" name="textConsole1" rows="1" cols="128" value=""></TEXTAREA>
+        <br><br>
+
         <FORM action="http://www.freegamersjournal.com/WebJS/php/runScript.php"
         method="post" id="formRunCode" target="_blank">
          <P>
          <label for="textName">Name: </label>
-         <TEXTAREA class="input" id="textName" name="textName" rows="1" cols="20" value=""></TEXTAREA>
+         <TEXTAREA class="input" id="textName" name="textName" onkeydown="return activateSafeSave();" rows="1" cols="20" value=""></TEXTAREA>
          </P>
 
          <P>
@@ -74,7 +78,9 @@ document.addEventListener("DOMContentLoaded", Init);
         <h2>Modules</h2>
 
         <!-- ============================================================== -->
-        <p>Select and Order Modules</p>
+        <legend>Console</legend>
+        <TEXTAREA class="input" onkeydown="return parseCommand(2);" id="textConsole2" name="textConsole2" rows="1" cols="128" value=""></TEXTAREA>
+        <br><br>
 
         <fieldset name="fieldsetModules">
           <legend>Include Modules</legend></legend>
@@ -84,6 +90,10 @@ document.addEventListener("DOMContentLoaded", Init);
         <h2>Data</h2>
 
         <!-- ============================================================== -->
+        <legend>Console</legend>
+        <TEXTAREA class="input" onkeydown="return parseCommand(3);" id="textConsole3" name="textConsole3" rows="1" cols="128" value=""></TEXTAREA>
+        <br><br>
+
           <div id="wrapper">
             <iframe src="http://freegamersjournal.com/svg-edit-2.6/svg-editor.html" width="750" height="600"/>
             <!-- <iframe src="src/script.html" marginheight="8" marginwidth="8" frameborder="0"></iframe> -->
