@@ -1,7 +1,5 @@
 <?php
-  function writePage($isModule, $width, $height, $modules, $script) {
-    echo($isModule . "~" . $width . "~" . $height . "~" . $modules . "~" . $script);
-  }
+include 'writePage.php';
 ?>
 
 <?php
@@ -20,11 +18,13 @@
     if ($result) {
       $row = mysql_fetch_row($result);
       while ($row) {
-        if (strlen($listOut) == 0) {
-          $listOut = $row[1];
-        }
-        else {
-          $listOut = $listOut . "~" . $row[1];
+        if (strstr($row[8], "engine")) {
+          if (strlen($listOut) == 0) {
+            $listOut = $row[1];
+          }
+          else {
+            $listOut = $listOut . "~" . $row[1];
+          }
         }
 
         $row = mysql_fetch_row($result);

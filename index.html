@@ -5,6 +5,7 @@
 editAreaLoader.init({
   id : "textCode"   // textarea id
   ,syntax: "js"      // syntax to be uses for highgliting
+  ,allow_resize: "x"
   ,start_highlight: true    // to display with highlight mode on start-up
 });
 </script>
@@ -25,9 +26,10 @@ document.addEventListener("DOMContentLoaded", Init);
     <div class="tabs">
       <ul>
         <li id="tabHeader_1">Code</li>
-        <li id="tabHeader_2">Modules</li>
-        <li id="tabHeader_3">Data</li>
-        <li id="tabHeader_4">Upload</li>
+        <li id="tabHeader_2">Output</li>
+        <li id="tabHeader_3">Modules</li>
+        <li id="tabHeader_4">Data</li>
+        <li id="tabHeader_5">Upload</li>
       </ul>
     </div>
     <div class="tabscontent">
@@ -36,11 +38,11 @@ document.addEventListener("DOMContentLoaded", Init);
 
         <!-- ============================================================== -->
         <legend>Console</legend>
-        <TEXTAREA class="input" onkeydown="return parseCommand(1);" id="textConsole1" name="textConsole1" rows="1" cols="128" value=""></TEXTAREA>
+        <TEXTAREA class="input" onkeydown="return parseCommand(1, event);" id="textConsole1" name="textConsole1" rows="1" cols="128" value=""></TEXTAREA>
         <br><br>
 
         <FORM action="http://www.freegamersjournal.com/WebJS/php/runScript.php"
-        method="post" id="formRunCode" target="_blank">
+        method="post" id="formRunCode" target="output_iframe">
          <P>
          <label for="textName">Name: </label>
          <TEXTAREA class="input" id="textName" name="textName" onkeydown="return activateSafeSave();" rows="1" cols="20" value=""></TEXTAREA>
@@ -56,6 +58,11 @@ document.addEventListener("DOMContentLoaded", Init);
          <TEXTAREA class="input" id="textHeight" name="textHeight" rows="1" cols="10" value="768"></TEXTAREA>
          </P>
 
+         <P>
+         <label for="textTags">Tags: </label>
+         <TEXTAREA class="input" id="textTags" name="textTags" rows="1" cols="255" value="768"></TEXTAREA>
+         </P>
+
         <fieldset>
           <legend>Code Type</legend>
             <input type="radio" class="typeRdo" name="programType" id="radioProgram" value="program" checked="checked"/>Program <br />
@@ -65,42 +72,54 @@ document.addEventListener("DOMContentLoaded", Init);
           <label>&nbsp; </label>
           <input class="lowButton" name="loadProgram" onclick="return loadCode();" type="submit" value="Load Program"></input>
           <input class="lowButton" name="saveProgram" onclick="return saveCode();" type="submit" value="Save Program"></input>
-          <input class="lowButton" name="runProgram" type="submit" value="Run Program"></input><br><br>
+          <input class="lowButton" name="bookmarkProgram" onclick="return bookmarkCode();" type="submit" value="Bookmark"></input>
+          <input class="lowButton" name="runProgram" onclick="return runCode();" type="submit" value="Run Program"></input><br><br>
 
          <P>
          Code<br>
-         <TEXTAREA id="textCode" rows="80" cols="128" value=""></TEXTAREA>
+         <TEXTAREA id="textCode" rows="80" cols="200" value=""></TEXTAREA>
          </P>
         </FORM>
         <!-- ============================================================== -->
       </div>
-      <div class="tabpage" id="tabpage_2">
+      <div class="tabpage" id="tabpage_2" width="100%">
+        <h2 align="center">Output</h2>
+
+        <!-- ============================================================== -->
+        <legend>Console</legend>
+        <TEXTAREA class="input" onkeydown="return parseCommand(2, event);" id="textConsole2" name="textConsole2" rows="1" cols="128" value=""></TEXTAREA>
+        <br>
+        <iframe align="middle" id="output_iframe" src="php/runScript.php" style="width:1200px; height:800px"></iframe>
+        
+        <!-- ============================================================== -->
+      </div>
+      <div class="tabpage" id="tabpage_3">
         <h2>Modules</h2>
 
         <!-- ============================================================== -->
         <legend>Console</legend>
-        <TEXTAREA class="input" onkeydown="return parseCommand(2);" id="textConsole2" name="textConsole2" rows="1" cols="128" value=""></TEXTAREA>
+        <TEXTAREA class="input" onkeydown="return parseCommand(3, event);" id="textConsole3" name="textConsole3" rows="1" cols="128" value=""></TEXTAREA>
         <br><br>
 
         <fieldset name="fieldsetModules">
           <legend>Include Modules</legend></legend>
         <!-- ============================================================== -->
       </div>
-      <div class="tabpage" id="tabpage_3">
+      <div class="tabpage" id="tabpage_4">
         <h2>Data</h2>
 
         <!-- ============================================================== -->
         <legend>Console</legend>
-        <TEXTAREA class="input" onkeydown="return parseCommand(3);" id="textConsole3" name="textConsole3" rows="1" cols="128" value=""></TEXTAREA>
+        <TEXTAREA class="input" onkeydown="return parseCommand(4, event);" id="textConsole4" name="textConsole4" rows="1" cols="128" value=""></TEXTAREA>
         <br><br>
 
           <div id="wrapper">
-            <iframe src="http://freegamersjournal.com/svg-edit-2.6/svg-editor.html" width="750" height="600"/>
+            <iframe src="http://freegamersjournal.com/svg-edit-2.6/svg-editor.html" width="1200" height="900"/>
             <!-- <iframe src="src/script.html" marginheight="8" marginwidth="8" frameborder="0"></iframe> -->
           </div>
         <!-- ============================================================== -->
       </div>
-      <div class="tabpage" id="tabpage_4">
+      <div class="tabpage" id="tabpage_5">
         <h2>Upload</h2>
 
         <!-- ============================================================== -->

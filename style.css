@@ -77,9 +77,9 @@ input.typeRdo {
 }
 
 #wrapper{
-  width:800px;
-  height:700px;
-  margin:40px auto 0;
+  width:1600px;
+  height:1200px;
+  align:center;
 }
 
 #wrapper h1{
@@ -98,7 +98,7 @@ input.typeRdo {
 }
 
 #tabContainer {
-  width:800px;
+  width:1300px;
   padding:15px;
   background-color:#2e2e2e;
   -moz-border-radius: 4px;

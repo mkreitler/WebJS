@@ -39,7 +39,7 @@ function FileSelectHandler(e) {
 
 function UploadFile(file) {
 // upload image files
-  var xhr = new XMLHttpRequest();
+  var xhr = getXmlHttpObject();
   var bIsImage = file.type === "image/jpeg" || file.type === "image/png";
   var bIsAudio = file.type === "audio/mp3" || file.type === "audio/ogg";
   var bIsText = file.type.indexOf("text") >= 0;
@@ -80,8 +80,21 @@ function UploadFile(file) {
   }
 }
 
-function activateSafeSave() {
+function activateSafeSave(e) {
   EditorInfo.bAskBeforeSaving = true;
+
+  var localEvent = window.event ? window.event : e;
+  var keyCode = localEvent.keyCode;
+  var retVal = true;
+
+  if (keyCode === 13) {
+    loadCode();
+    localEvent.preventDefault();
+
+    retVal = false;
+  }
+
+  return retVal;
 };
 
 function ParseFile(file) {
@@ -147,7 +160,7 @@ function Init() {
       fileselect.addEventListener("change", FileSelectHandler, false);
 
       // is XHR2 available?
-      var xhr = new XMLHttpRequest();
+      var xhr = getXmlHttpObject();
       if (xhr.upload) {
         // file drop
         filedrag.addEventListener("dragover", FileDragHover, false);
@@ -179,13 +192,14 @@ function getXmlHttpObject() {
 };
 
 var conHistory = {cmdIndex: -1, cmdList:[]};
-function parseCommand(index) {
+function parseCommand(index, e) {
   var ret = true;
   var textArea = null;
   var xmlObj = null;
+  var keyCode = window.event ? window.event.keyCode : e.keyCode;
 
   // Check for enter key.
-  if (window.event.keyCode === 13) {
+  if (keyCode === 13) {
     // Process command and clear console line.
     textArea = document.getElementsByName("textConsole" + index)[0];
     if (textArea) {
@@ -197,7 +211,7 @@ function parseCommand(index) {
       xmlObj = getXmlHttpObject();
       if (xmlObj) {
         var http = getXmlHttpObject();
-        var url = "http://www.freegamersjournal.com/WebJS/php/runConsoleCommand.php";
+        var url = "php/runConsoleCommand.php";
         var i;
 
         http.open("POST", url, true);
@@ -206,8 +220,8 @@ function parseCommand(index) {
         http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
         http.onreadystatechange = function() {
-          if (http.readyState === 4 && http.status == 200) {
-            if (http.status == 200) {
+          if (http.readyState === 4) {
+            if (http.status === 200) {
               alert(http.responseText);
             }
             else {
@@ -225,7 +239,7 @@ function parseCommand(index) {
 
     ret = false;
   }
-  else if (window.event.keyCode === 38) {
+  else if (keyCode === 38) {
     // Up arrow.
     textArea = document.getElementsByName("textConsole" + index)[0];
     if (textArea) {
@@ -235,7 +249,7 @@ function parseCommand(index) {
 
     ret = false;
   }
-  else if (window.event.keyCode === 40) {
+  else if (keyCode === 40) {
     // Down arrow.
     textArea = document.getElementsByName("textConsole" + index)[0];
     if (textArea) {
@@ -256,7 +270,7 @@ function parseCommand(index) {
 var modules = [];
 function loadModules() {
   var http = getXmlHttpObject();
-  var url = "http://www.freegamersjournal.com/WebJS/php/loadModules.php";
+  var url = "php/loadModules.php";
   var moduleList = document.getElementsByName("fieldsetModules")[0];
   var i;
 
@@ -301,7 +315,7 @@ function loadModules() {
     }
   }
 
-  http.send("");  
+  http.send("dummy");  
 
   return false;
 };
@@ -314,10 +328,44 @@ function removeModule() {
   alert("Remove Module");
 };
 
+function displayOutputTab() {
+  var container = document.getElementById("tabContainer");
+  var tabs = container.querySelectorAll(".tabs ul li");
+  if (tabs && tabs[1]) {
+    tabs[1].onclick();
+  }
+}
+
+function bookmarkCode() {
+  var comment = prompt("Enter a bookmark comment", "New Version");
+  var http = getXmlHttpObject();
+  var url = "php/bookmarkScript.php";
+  var progName = document.getElementById("textName").value;
+
+  if (comment) {
+    var code = editAreaLoader.getValue("textCode");
+
+    http.open("POST", url, true);
+
+    //Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+    http.onreadystatechange = function() {//Call a function when the state changes.
+      if (http.readyState === 4 && http.status == 200 && http.responseText) {
+        alert(http.responseText);
+      }
+    }
+
+    http.send("name=" + progName + "&comment=" + comment + "&code=" + code);  
+  }
+
+  return false;
+}
+
 function loadCode()
 {
   var http = getXmlHttpObject();
-  var url = "http://www.freegamersjournal.com/WebJS/php/loadScript.php";
+  var url = "php/loadScript.php";
   var progName = document.getElementById("textName").value;
   var progType = document.getElementById("radioModule").checked === "checked" ? "module" : "program";
   var requiredModules = null;
@@ -393,14 +441,14 @@ function loadCode()
 
 // Credit to Rakesh Pai via StackOverflow
 function postToUrl(path, params, method) {
-    method = method || "post"; // Set method to post by default, if not specified.
+    method = method || "POST"; // Set method to post by default, if not specified.
 
     // The rest of this code assumes you are not using a library.
     // It can be made less wordy if you use one.
     var form = document.createElement("form");
     form.setAttribute("method", method);
     form.setAttribute("action", path);
-    form.setAttribute("target", "_blank");
+    form.setAttribute("target", "output_iframe");
 
     for(var key in params) {
         if(params.hasOwnProperty(key)) {
@@ -425,6 +473,20 @@ function postToUrl(path, params, method) {
     form.submit();
 }
 
+function runCode() {
+  var path="http://www.freegamersjournal.com/WebJS/php/runScript.php";
+
+  var params = {
+    textName:document.getElementById("textName").value,
+  };
+
+  postToUrl(path, params, "POST");
+
+  displayOutputTab();
+
+  return false;
+}
+
 function saveCode() {
   var code = editAreaLoader.getValue("textCode");
   var bAllowSave = true;
@@ -443,6 +505,11 @@ function saveCode() {
     var isModule = document.getElementById("radioModule").checked;
     var width = isModule ? "0" : document.getElementById("textWidth").value;
     var height = isModule ? "0" : document.getElementById("textHeight").value;
+    var tags = document.getElementById("textTags").value();
+
+    if (tags) {
+      tags.replace(/\s+/, "");
+    }
 
     for (iMod=0; iMod<modules.length; ++iMod) {
       if (modules[iMod].checked) {
@@ -461,9 +528,10 @@ function saveCode() {
       name:document.getElementById("textName").value,
       type:isModule ? "0" : "1",
       code:code,
-      modules:moduleStr
+      modules:moduleStr,
+      tags:tags
     };
-    postToUrl(path, params, "post");
+    postToUrl(path, params, "POST");
   }
 
   return false;
