@@ -192,6 +192,7 @@ function getXmlHttpObject() {
 };
 
 var conHistory = {cmdIndex: -1, cmdList:[]};
+var RECALL_PREFIX = "RECALL~";
 function parseCommand(index, e) {
   var ret = true;
   var textArea = null;
@@ -220,9 +221,18 @@ function parseCommand(index, e) {
         http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
         http.onreadystatechange = function() {
+          var recallIndex = -1;
+
           if (http.readyState === 4) {
             if (http.status === 200) {
-              alert(http.responseText);
+              recallIndex = http.responseText.indexOf(RECALL_PREFIX);
+              if (recallIndex >= 0) {
+                // Retrieving "recall" data.
+                receiveFile(http.responseText.substring(recallIndex + RECALL_PREFIX.length));
+              }
+              else {
+                alert(http.responseText);
+              }
             }
             else {
               alert("Command failed.");
@@ -272,7 +282,18 @@ function loadModules() {
   var http = getXmlHttpObject();
   var url = "php/loadModules.php";
   var moduleList = document.getElementsByName("fieldsetModules")[0];
+  var codeName = document.getElementById("textName").value;
   var i;
+  var tags = document.getElementById("textTags").value;
+
+  // Clear out old modules.
+  moduleList.innerHTML = "";
+
+  if (tags.indexOf("engine") < 0) {
+    tags = "engine, " + tags;
+  }
+
+  tags.replace(/\s+/, "");
 
   http.open("POST", url, true);
 
@@ -290,34 +311,95 @@ function loadModules() {
       // <input type="checkbox" class="moduleChk" id="checkClasses" value="canvasGraphics" checked="checked" />canvasGraphics<br />
 
       for (i=0; i<results.length; ++i) {
-        results[i] = results[i].replace("\n", "");
-        results[i] = results[i].replace(" ", "");
+        results[i] = results[i].replace(/\s+/, "");
 
-        br = document.createElement("br");
+        if (results[i].toLowerCase() !== codeName.toLowerCase()) {
+          br = document.createElement("br");
+          br.name = "moduleBrk";
 
-        label = document.createElement("label");
+          label = document.createElement("label");
 
-        opt = document.createElement("input");
-        opt.type = "checkbox";
-        opt.class = "moduleChk";
-        opt.name = results[i];
-        opt.id = results[i];
-        opt.value = results[i];
+          opt = document.createElement("input");
+          opt.type = "checkbox";
+          opt.class = "moduleChk";
+          opt.name = results[i];
+          opt.id = results[i];
+          opt.value = results[i];
 
-        label.appendChild(document.createTextNode(results[i]));
-        label.appendChild(opt);
+          label.appendChild(document.createTextNode(results[i]));
+          label.name = "moduleLbl";
+          label.appendChild(opt);
 
-        moduleList.appendChild(label);
-        moduleList.appendChild(br);
+          moduleList.appendChild(label);
+          moduleList.appendChild(br);
 
-        modules.push(opt);
+          modules.push(opt);
+        }
       }
     }
   }
 
-  http.send("dummy");  
+  http.send("tags=" + tags);  
 
   return false;
+};
+
+function receiveFile(responseText) {
+  var results = responseText.split("~");
+  var bLoadError = false;
+
+  if (typeof(results) === 'undefined') {
+    bLoadError = true;
+  }
+  else if (results.length >= 6) {
+    var isModule = parseInt(results[0]);
+
+    if (isModule) {
+      document.getElementById("radioModule").checked = false;
+      document.getElementById("radioProgram").checked = true;
+    }
+    else {
+      document.getElementById("radioModule").checked = true;
+      document.getElementById("radioProgram").checked = false;
+    }
+
+    document.getElementById("textWidth").value = "" + parseInt(results[1]);
+    document.getElementById("textHeight").value = "" + parseInt(results[2]);
+
+    results[6].replace(",", ", ");
+    document.getElementById("textTags").value = results[6];
+
+    // Update the "modules" checkboxes.
+    requiredModules = results[3].split(",");
+
+    for (iMod=0; iMod<modules.length; ++iMod) {
+      checkBox = modules[iMod];
+      checkBox.checked = false;
+
+      for (jMod=0; jMod<requiredModules.length; ++jMod) {
+        if (checkBox.value === requiredModules[jMod]) {
+          checkBox.checked = true;
+          break;
+        }
+      }
+    }
+
+    // Add the code to the editor.
+    // TODO: force editArea to update the client area
+    // of the "Code" text box following a load().
+    editAreaLoader.setValue("textCode", results[4]);
+
+    document.getElementById("textName").value = results[5].replace(/\s+/, "");
+
+    loadModules();
+  }
+  else {
+    bLoadError = true;
+  }
+
+  if (bLoadError) {
+    alert("Failure during load.");
+  }
 };
 
 function addModule() {
@@ -381,54 +463,7 @@ function loadCode()
 
   http.onreadystatechange = function() {//Call a function when the state changes.
     if (http.readyState === 4 && http.status == 200 && http.responseText) {
-      var results = http.responseText.split("~");
-      var bLoadError = false;
-
-      if (typeof(results) === 'undefined') {
-        bLoadError = true;
-      }
-      else if (results.length >= 4) {
-        var isModule = parseInt(results[0]);
-
-        if (isModule) {
-          document.getElementById("radioModule").checked = false;
-          document.getElementById("radioProgram").checked = true;
-        }
-        else {
-          document.getElementById("radioModule").checked = true;
-          document.getElementById("radioProgram").checked = false;
-        }
-
-        document.getElementById("textWidth").value = "" + parseInt(results[1]);
-        document.getElementById("textHeight").value = "" + parseInt(results[2]);
-
-        // Update the "modules" checkboxes.
-        requiredModules = results[3].split(",");
-
-        for (iMod=0; iMod<modules.length; ++iMod) {
-          checkBox = modules[iMod];
-          checkBox.checked = false;
-
-          for (jMod=0; jMod<requiredModules.length; ++jMod) {
-            if (checkBox.value === requiredModules[jMod]) {
-              checkBox.checked = true;
-              break;
-            }
-          }
-        }
-
-        // Add the code to the editor.
-        // TODO: force editArea to update the client area
-        // of the "Code" text box following a load().
-        editAreaLoader.setValue("textCode", results[4]);
-      }
-      else {
-        bLoadError = true;
-      }
-
-      if (bLoadError) {
-        alert("Failure during load.");
-      }
+      receiveFile(http.responseText);
     }
   }
 
@@ -474,12 +509,14 @@ function postToUrl(path, params, method) {
 }
 
 function runCode() {
-  var path="http://www.freegamersjournal.com/WebJS/php/runScript.php";
+  var path="http://www.freegamersjournal.com/WebJS/php/runScript.php?cacheCleaner=" + Date.now();
+  var name = document.getElementById("textName").value;
 
   var params = {
-    textName:document.getElementById("textName").value,
+    textName:name
   };
 
+  document.getElementById("output_iframe").contentDocument.location = path;
   postToUrl(path, params, "POST");
 
   displayOutputTab();
@@ -505,11 +542,9 @@ function saveCode() {
     var isModule = document.getElementById("radioModule").checked;
     var width = isModule ? "0" : document.getElementById("textWidth").value;
     var height = isModule ? "0" : document.getElementById("textHeight").value;
-    var tags = document.getElementById("textTags").value();
+    var tags = document.getElementById("textTags").value;
 
-    if (tags) {
-      tags.replace(/\s+/, "");
-    }
+    tags.replace(/\s+/, "");
 
     for (iMod=0; iMod<modules.length; ++iMod) {
       if (modules[iMod].checked) {
