@@ -171,7 +171,7 @@ function Init() {
         submitbutton.style.display = "none";
       }
 
-      loadModules();
+      loadModules(null);
     }
   }
 }
@@ -278,7 +278,7 @@ function parseCommand(index, e) {
 // xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 // xmlhttp.send("fname=Henry&lname=Ford");
 var modules = [];
-function loadModules() {
+function loadModules(requiredModules) {
   var http = getXmlHttpObject();
   var url = "php/loadModules.php";
   var moduleList = document.getElementsByName("fieldsetModules")[0];
@@ -293,7 +293,7 @@ function loadModules() {
     tags = "engine, " + tags;
   }
 
-  tags.replace(/\s+/, "");
+  tags.replace(/[\s]+/, "");
 
   http.open("POST", url, true);
 
@@ -306,16 +306,17 @@ function loadModules() {
       var opt;
       var label;
       var br;
+      var iMod;
+      var checkBox;
 
       // <input type="checkbox" class="moduleChk" id="checkGraphics" value="classStructure" checked="checked" />classStructure<br />
       // <input type="checkbox" class="moduleChk" id="checkClasses" value="canvasGraphics" checked="checked" />canvasGraphics<br />
 
       for (i=0; i<results.length; ++i) {
-        results[i] = results[i].replace(/\s+/, "");
+        results[i] = results[i].replace(/[\s]+/, "");
 
         if (results[i].toLowerCase() !== codeName.toLowerCase()) {
           br = document.createElement("br");
-          br.name = "moduleBrk";
 
           label = document.createElement("label");
 
@@ -325,9 +326,17 @@ function loadModules() {
           opt.name = results[i];
           opt.id = results[i];
           opt.value = results[i];
+          opt.checked = false;
+
+          if (requiredModules && requiredModules.length) {
+            for (iMod=0; iMod<requiredModules.length; ++iMod) {
+              if (opt.name === requiredModules[iMod]) {
+                opt.checked = true;
+              }
+            }
+          }
 
           label.appendChild(document.createTextNode(results[i]));
-          label.name = "moduleLbl";
           label.appendChild(opt);
 
           moduleList.appendChild(label);
@@ -372,26 +381,15 @@ function receiveFile(responseText) {
     // Update the "modules" checkboxes.
     requiredModules = results[3].split(",");
 
-    for (iMod=0; iMod<modules.length; ++iMod) {
-      checkBox = modules[iMod];
-      checkBox.checked = false;
-
-      for (jMod=0; jMod<requiredModules.length; ++jMod) {
-        if (checkBox.value === requiredModules[jMod]) {
-          checkBox.checked = true;
-          break;
-        }
-      }
-    }
+    loadModules(requiredModules);
 
     // Add the code to the editor.
     // TODO: force editArea to update the client area
     // of the "Code" text box following a load().
     editAreaLoader.setValue("textCode", results[4]);
+//    editAreaLoader.setValue("textCode", decodeURIComponent(results[4]));
 
-    document.getElementById("textName").value = results[5].replace(/\s+/, "");
-
-    loadModules();
+    document.getElementById("textName").value = results[5].replace(/[\s]+/, "");
   }
   else {
     bLoadError = true;
@@ -438,7 +436,7 @@ function bookmarkCode() {
       }
     }
 
-    http.send("name=" + progName + "&comment=" + comment + "&code=" + code);  
+    http.send("name=" + progName + "&comment=" + comment + "&code=" + encodeURIComponent(code));  
   }
 
   return false;
@@ -525,17 +523,21 @@ function runCode() {
 }
 
 function saveCode() {
+  var http = getXmlHttpObject();
+  var url = "php/saveScript.php";
   var code = editAreaLoader.getValue("textCode");
   var bAllowSave = true;
 
-  if (EditorInfo.bAskBeforeSaving || code.length < EditorInfo.MIN_SAVE_LENGTH) {
-      bAllowSave = confirm('Are you sure you want to save?');
+  if (code.length < EditorInfo.MIN_SAVE_LENGTH) {
+    bAllowSave = confirm("FILE LENGTH WARNING!\n\nAre you sure you want to save?");
+  }
+  else if (EditorInfo.bAskBeforeSaving) {
+    bAllowSave = confirm('Are you sure you want to save?');
   }
 
   if (bAllowSave) {
     EditorInfo.bAskBeforeSaving = false;
 
-    var path = "http://www.freegamersjournal.com/WebJS/php/saveScript.php";
     var moduleStr = "";
     var iMod;
     var moduleCount = 0;
@@ -544,7 +546,7 @@ function saveCode() {
     var height = isModule ? "0" : document.getElementById("textHeight").value;
     var tags = document.getElementById("textTags").value;
 
-    tags.replace(/\s+/, "");
+    tags.replace(/[\s]+/, "");
 
     for (iMod=0; iMod<modules.length; ++iMod) {
       if (modules[iMod].checked) {
@@ -557,17 +559,27 @@ function saveCode() {
       }
     }
 
-    var params = {
-      width:width,
-      height:height,
-      name:document.getElementById("textName").value,
-      type:isModule ? "0" : "1",
-      code:code,
-      modules:moduleStr,
-      tags:tags
-    };
-    postToUrl(path, params, "POST");
+    http.open("POST", url, true);
+
+    //Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+    http.onreadystatechange = function() {//Call a function when the state changes.
+      if (http.readyState === 4 && http.status == 200 && http.responseText) {
+        if (http.responseText) {
+          alert(http.responseText);
+        }
+      }
+    }
+
+    http.send("width=" + width +
+              "&height=" + height +
+              "&name=" + document.getElementById("textName").value +
+              "&type=" + (isModule ? "0" : "1") +
+              "&code=" + encodeURIComponent(code) +
+              "&modules=" + moduleStr +
+              "&tags=" + tags);
   }
 
   return false;
-}
+};
